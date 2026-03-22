@@ -14,7 +14,6 @@ Here's my complete main.tf file, explained block by block:
 
 ```bash
 hcl
-Copy
 # Provider Block
 # Tells Terraform to use AWS and which region to deploy resources in
 provider "aws" {
@@ -92,7 +91,6 @@ resource "aws_instance" "web_server" {
 ### Step 1: Initialize (terraform init)
 
 ```bash
-Copy
 $ terraform init
 
 Initializing the backend...
@@ -107,6 +105,7 @@ Terraform has created a lock file .terraform.lock.hcl to record the provider
 selections it made above. Include this file in your version control repository
 so that Terraform can guarantee to make the same selections by default when
 you run "terraform init" in the future.
+
 ```
 
 This downloads the AWS provider plugin and sets up the working directory. Run this once per project or when adding new providers.
@@ -114,7 +113,6 @@ This downloads the AWS provider plugin and sets up the working directory. Run th
 ### Step 2: Plan (terraform plan)
 
 ```bash
-Copy
 $ terraform plan
 
 Terraform will perform the following actions:
@@ -140,7 +138,6 @@ terraform plan is your safety net. It shows exactly what will change without mak
 ### Step 3: Apply (terraform apply)
 
 ```bash
-Copy
 $ terraform apply
 
 aws_security_group.web_sg: Creating...
@@ -168,7 +165,6 @@ The page loaded successfully. Infrastructure as Code just became real infrastruc
 ### Cleanup (terraform destroy)
 
 ```bash
-Copy
 $ terraform destroy
 
 aws_instance.web_server: Destroying... [id=i-0123456789abcdef0]
