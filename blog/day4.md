@@ -381,10 +381,10 @@ Spending time in the official docs revealed nuances:
 4. Data sources: The depends_on meta-argument can force data sources to refresh in specific orders when implicit dependencies aren't enough
 
 ## What Broke and How I Fixed It
-![Table](images/image1.png)
+![Table](images/image3.png)
 
 The Difference: Day 3 vs. Day 4
-![Table](images/image2.png)
+![Table](images/image4.png)
 
 ## Conclusion
 Moving from a single server to a clustered, load-balanced architecture taught me that production infrastructure is about resilience, not just functionality. Input variables enforce the DRY principle, making configurations maintainable across teams and environments. Data sources eliminate brittle hardcoding. Auto Scaling Groups and Load Balancers transform fragile servers into robust systems.
