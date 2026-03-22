@@ -28,7 +28,7 @@ On Linux:
 ```bash
 sudo apt update
 sudo apt install awscli -y
----
+```
 
 ## Step 3: Install Terraform
 
@@ -47,9 +47,13 @@ sudo tee /etc/apt/sources.list.d/hashicorp.list
 
 sudo apt update
 sudo apt install terraform
+```
 
 ## Step 4: Validation
+
+```bash
 terraform version
 aws --version
 aws sts get-caller-identity
 aws configure list
+```
