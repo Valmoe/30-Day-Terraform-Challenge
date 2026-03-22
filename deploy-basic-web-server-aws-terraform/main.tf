@@ -21,7 +21,7 @@ data "aws_vpc" "default" {
 
 # Security Group - allow HTTP and SSH
 resource "aws_security_group" "web_sg" {
-  name        = "web_server_sg"
+  name        = "web-security-group"
   description = "Allow HTTP inbound traffic"
   vpc_id      = data.aws_vpc.default.id
 
