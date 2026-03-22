@@ -160,7 +160,7 @@ Terraform created the security group first (dependency), then the EC2 instance. 
 ### Verification
 I opened a browser and navigated to http://34.221.139.193.
 The page loaded successfully. Infrastructure as Code just became real infrastructure.
-![Page Load](30-Day-Terraform-Challenge\deploy-basic-web-server-aws-terraform\images\image2.png)
+![Page Load](30-Day-Terraform-Challenge\blog\images\image2.jpg)
 
 ### Cleanup (terraform destroy)
 
@@ -197,7 +197,7 @@ Internet Gateway (provides public access)
 EC2 Instance (t2.micro) with public IP
 Security Group (port 80 open)
 User Data script installing Apache
-![Architecture Diagram](30-Day-Terraform-Challenge\deploy-basic-web-server-aws-terraform\images\image.png)
+![Architecture Diagram](30-Day-Terraform-Challenge\blog\images\image.png)
 
 ## Key Takeaways
 1. Dependencies are automatic: Terraform knew to create the security group before the EC2   instance because I referenced aws_security_group.web_sg.id in the instance resource.
