@@ -11,9 +11,9 @@ Before writing code, I needed to understand two fundamental Terraform concepts f
 
 My First Terraform Configuration
 Here's my complete main.tf file, explained block by block:
-hcl
 
 ```bash
+hcl
 Copy
 # Provider Block
 # Tells Terraform to use AWS and which region to deploy resources in
@@ -90,6 +90,7 @@ resource "aws_instance" "web_server" {
 
 ## The Terraform Workflow
 ### Step 1: Initialize (terraform init)
+
 ```bash
 Copy
 $ terraform init
@@ -111,6 +112,7 @@ you run "terraform init" in the future.
 This downloads the AWS provider plugin and sets up the working directory. Run this once per project or when adding new providers.
 
 ### Step 2: Plan (terraform plan)
+
 ```bash
 Copy
 $ terraform plan
@@ -136,6 +138,7 @@ Plan: 2 to add, 0 to change, 0 to destroy.
 terraform plan is your safety net. It shows exactly what will change without making any modifications. Review this carefully as it's your last chance to catch mistakes before they cost money.
 
 ### Step 3: Apply (terraform apply)
+
 ```bash
 Copy
 $ terraform apply

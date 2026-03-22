@@ -20,8 +20,8 @@ Never use root credentials for Terraform. Here's exactly what I did:
 
 ## Step 3: Install AWS CLI
 I installed AWS CLI version 2 using the official installer:
+
 ```bash
-Copy
 # For Ubuntu/Debian
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
@@ -36,7 +36,6 @@ aws --version
 Run aws configure and enter your credentials:
 
 ```bash
-Copy
 $ aws configure
 AWS Access Key ID [None]: AKIAIOSxxxxxxxx
 AWS Secret Access Key [None]: wJalrXUtnFEMI/xxxxxxxxxxxxx
@@ -50,7 +49,6 @@ I chose us-east-1 because it has the most complete service availability and lowe
 I used the official HashiCorp repository to get the latest version:
 
 ```bash
-Copy
 # Add HashiCorp GPG key
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
 
@@ -73,7 +71,6 @@ Extensions installed:
 Before proceeding, I ran all four validation commands to confirm everything works:
 
 ```bash
-Copy
 terraform version
 aws --version
 aws sts get-caller-identity
