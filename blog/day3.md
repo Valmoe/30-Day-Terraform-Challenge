@@ -13,11 +13,10 @@ My First Terraform Configuration
 Here's my complete main.tf file, explained block by block:
 
 ```bash
-hcl
 # Provider Block
 # Tells Terraform to use AWS and which region to deploy resources in
 provider "aws" {
-  region = "us-east-1"
+  region = "us-west-2"
 }
 
 # Security Group Resource
@@ -54,35 +53,41 @@ resource "aws_security_group" "web_sg" {
 # EC2 Instance Resource
 # The actual virtual server we'll deploy
 resource "aws_instance" "web_server" {
-  ami           = "ami-0c7217cdde317cfec"  # Ubuntu 22.04 LTS in us-east-1
-  instance_type = "t2.micro"               # Free tier eligible
-  
-  # Attach the security group we defined above
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
-  
-  # User data script runs on first boot to set up the web server
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = var.instance_type
+  vpc_security_group_ids      = [aws_security_group.web_sg.id]
+  associate_public_ip_address = true
+
   user_data = <<-EOF
-              #!/bin/bash
-              apt-get update
-              apt-get install -y apache2
-              systemctl start apache2
-              systemctl enable apache2
-              echo "<h1>Hello from Terraform! Day 3 Complete 🚀</h1>" > /var/www/html/index.html
-              EOF
+    #!/bin/bash
+    yum update -y
+    yum install -y httpd
+    systemctl start httpd
+    systemctl enable httpd
+    echo "<html>
+      <head><title>Day 3 - Terraform Web Server</title></head>
+      <body>
+        <h1>Hello from Terraform!</h1>
+        <p>Deployed by: Valmoe</p>
+        <p>30 Day Terraform Challenge - Day 3</p>
+      </body>
+    </html>" > /var/www/html/index.html
+  EOF
 
   tags = {
-    Name = "Terraform-Day3-Server"
+    Name    = "web_server"
+    Purpose = "30 Day Terraform Challenge - Day 3"
   }
 }
 ```
 
 ## Block-by-Block Explanation:
-- Provider Block: provider "aws" initializes the AWS provider. I specified us-east-1 to match my configured region. This single block gives Terraform access to hundreds of AWS resource types.
+- Provider Block: provider "aws" initializes the AWS provider. I specified us-west-2 to match my configured region. This single block gives Terraform access to hundreds of AWS resource types.
 
 - Security Group Resource: aws_security_group.web_sg creates a firewall. The ingress rule allows HTTP (port 80) from any IP address—necessary for a public web server but overly permissive for production. The egress rule allows the server to reach the internet for updates.
 
 - EC2 Instance Resource: aws_instance.web_server is the compute resource. Key parameters:
-    1. ami: Amazon Machine Image—this specific ID is Ubuntu 22.04 in us-east-1. AMIs are region-specific.
+    1. ami: Amazon Machine Image—this specific ID is Ubuntu 22.04 in us-west-2. AMIs are region-specific.
     2. instance_type: t2.micro is free-tier eligible but limited to 1 vCPU and 1GB RAM
     3. vpc_security_group_ids: References the security group created above using         aws_security_group.web_sg.id. This creates a dependency—Terraform knows to create the   security group first.
     4. user_data: A shell script that runs once at boot time. It installs Apache and creates a simple web page.
@@ -119,8 +124,8 @@ Terraform will perform the following actions:
 
   # aws_instance.web_server will be created
   + resource "aws_instance" "web_server" {
-      + ami                          = "ami-0c7217cdde317cfec"
-      + instance_type                = "t2.micro"
+      + ami                          = "data.aws_ami.amazon_linux.id"
+      + instance_type                = "t3.micro"
       + public_ip                    = (known after apply)
       ...
     }
@@ -160,6 +165,7 @@ Terraform created the security group first (dependency), then the EC2 instance. 
 ### Verification
 I opened a browser and navigated to http://34.221.139.193.
 The page loaded successfully. Infrastructure as Code just became real infrastructure.
+
 ![Page Load](images/image2.jpg)
 
 ### Cleanup (terraform destroy)
@@ -190,12 +196,13 @@ Always destroy resources when done. Unused EC2 instances cost money, and securit
 
 Architecture Diagram
 I created a diagram showing:
-AWS Cloud (us-east-1 region)
+AWS Cloud (us-west-2 region)
 VPC (default)
 Internet Gateway (provides public access)
-EC2 Instance (t2.micro) with public IP
+EC2 Instance (t3.micro) with public IP
 Security Group (port 80 open)
 User Data script installing Apache
+
 ![Architecture Diagram](images/image.png)
 
 ## Key Takeaways

@@ -18,8 +18,6 @@ First, I refactored my Day 3 server to use variables. Here's the evolution:
 variables.tf — The contract:
 
 ```bash
-hcl
-Copy
 variable "server_port" {
   description = "The port the server will use for HTTP requests"
   type        = number
@@ -29,23 +27,25 @@ variable "server_port" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "region" {
   description = "AWS region for deployment"
   type        = string
-  default     = "us-east-1"
+  default     = "us-west-2"
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Environment name (dev, stag, prod)"
   type        = string
   default     = "dev"
 }
+```
+
 main.tf — The implementation, now clean:
-hcl
-Copy
+
+```bash
 provider "aws" {
   region = var.region
 }
@@ -67,7 +67,6 @@ resource "aws_security_group" "web_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
@@ -90,15 +89,19 @@ resource "aws_instance" "web_server" {
     Environment = var.environment
   }
 }
-Why these defaults?
-server_port = 8080: Non-privileged port (no root needed), common for web apps behind load balancers
-instance_type = "t2.micro": Free tier eligible, sufficient for development workloads
-region = "us-east-1": Broadest service availability, cost-effective
-environment = "dev": Safe default that won't accidentally deploy to production
-Phase 2: Data Sources for Dynamic Configuration
+```
+
+### Why these defaults?
+- server_port = 8080: Non-privileged port (no root needed), common for web apps behind load balancers
+- instance_type = "t3.micro": Free tier eligible, sufficient for development workloads
+region = "us-west-2": Broadest service availability, cost-effective
+- environment = "dev": Safe default that won't accidentally deploy to production
+
+
+## Phase 2: Data Sources for Dynamic Configuration
 Hardcoding AMI IDs is fragile—they vary by region and become outdated. Data sources query AWS dynamically:
-hcl
-Copy
+
+```bash
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"] # Canonical (Ubuntu) official account
@@ -117,19 +120,25 @@ data "aws_ami" "ubuntu" {
 data "aws_availability_zones" "all" {
   state = "available"
 }
+```
+
 The aws_ami data source finds the latest Ubuntu 22.04 AMI automatically. The aws_availability_zones data source (required for clustering) fetches active AZs dynamically—critical because AZ availability varies by account and region.
-Phase 3: Building for Scale — The Clustered Architecture
+
+## Phase 3: Building for Scale — The Clustered Architecture
 A single server is a liability. If it fails, your service is down. If traffic spikes, it chokes. Here's the production architecture:
-Architecture Components:
-Launch Template: Blueprint for instances (AMI, instance type, user data, security groups)
-Auto Scaling Group (ASG): Maintains 2-5 instances across multiple AZs, replacing unhealthy ones automatically
-Application Load Balancer (ALB): Distributes HTTP requests across healthy instances
-Target Group: Health checks and routing logic connecting ALB to ASG
-Security Groups: Layered security—one for ALB (public-facing), one for instances (internal)
-Complete Cluster Configuration:
-hcl
-Copy
-# variables.tf additions for clustering
+
+### Architecture Components:
+
+1. Launch Template: Blueprint for instances (AMI, instance type, user data, security groups)
+2. Auto Scaling Group (ASG): Maintains 2-5 instances across multiple AZs, replacing unhealthy ones automatically
+3. Application Load Balancer (ALB): Distributes HTTP requests across healthy instances
+4. Target Group: Health checks and routing logic connecting ALB to ASG
+5. Security Groups: Layered security—one for ALB (public-facing), one for instances (internal)
+
+### Complete Cluster Configuration:
+
+#### variables.tf additions for clustering
+```bash
 variable "cluster_name" {
   description = "Name for the cluster resources"
   type        = string
@@ -153,9 +162,10 @@ variable "desired_capacity" {
   type        = number
   default     = 2
 }
+```
 
-# main.tf - Cluster resources
-
+#### main.tf - Cluster resources
+```bash
 # Launch Template: The instance blueprint
 resource "aws_launch_template" "web" {
   name_prefix   = "${var.cluster_name}-lt"
@@ -292,8 +302,10 @@ data "aws_subnets" "default" {
     values = [data.aws_vpc.default.id]
   }
 }
+```
 
-# outputs.tf
+#### outputs.tf
+```bash
 output "alb_dns_name" {
   description = "DNS name of the load balancer"
   value       = aws_lb.web.dns_name
@@ -303,8 +315,10 @@ output "asg_name" {
   description = "Name of the Auto Scaling Group"
   value       = aws_autoscaling_group.web.name
 }
-The User Data Script (user-data.sh):
-bash
+```
+
+#### The User Data Script (user-data.sh):
+```bash
 Copy
 #!/bin/bash
 apt-get update
@@ -324,58 +338,55 @@ EOF
 sed -i "s/Listen 80/Listen ${server_port}/g" /etc/apache2/ports.conf
 sed -i "s/:80/:${server_port}/g" /etc/apache2/sites-enabled/000-default.conf
 systemctl restart apache2
-Key Architectural Decisions:
-Separate Security Groups: ALB security group allows public HTTP (port 80). Instance security group only allows traffic from the ALB on the application port (8080). This is defense in depth—even if the instance security group is misconfigured, the ALB acts as a shield.
-Health Checks: The target group health check pings / every 15 seconds. If an instance fails twice consecutively, it's marked unhealthy and replaced by the ASG. This provides automatic healing.
-Multi-AZ Deployment: The ASG spans all available AZs in the region. If an entire availability zone fails, traffic routes to healthy instances in other zones.
-Launch Template Lifecycle: create_before_destroy ensures new instances are healthy before old ones are terminated during updates—zero-downtime deployments.
-Deployment and Verification
-bash
-Copy
+```
+
+## Key Architectural Decisions:
+1. Separate Security Groups: ALB security group allows public HTTP (port 80). Instance security group only allows traffic from the ALB on the application port (8080). This is defense in depth—even if the instance security group is misconfigured, the ALB acts as a shield.
+2. Health Checks: The target group health check pings / every 15 seconds. If an instance fails twice consecutively, it's marked unhealthy and replaced by the ASG. This provides automatic healing.
+3. Multi-AZ Deployment: The ASG spans all available AZs in the region. If an entire availability zone fails, traffic routes to healthy instances in other zones.
+4. Launch Template Lifecycle: create_before_destroy ensures new instances are healthy before old ones are terminated during updates—zero-downtime deployments.
+
+## Deployment and Verification
+```bash
 terraform init
 terraform plan
 terraform apply
 
 # Output:
-alb_dns_name = "terraform-web-alb-123456789.us-east-1.elb.amazonaws.com"
+alb_dns_name = "terraform-web-alb-1876613842.us-west-2.elb.amazonaws.com"
 asg_name     = "terraform-web-asg"
-Testing the deployment:
-bash
-Copy
-curl http://terraform-web-alb-123456789.us-east-1.elb.amazonaws.com
+```
+
+## Testing the deployment:
+```bash
+curl http://terraform-web-alb-1876613842.us-west-2.elb.amazonaws.com
+```
+
 Response:
-HTML
-Preview
-Copy
+```bash
 <h1>Hello from Terraform Cluster!</h1>
 <p>Environment: dev</p>
 <p>Server Port: 8080</p>
 <p>Hostname: ip-172-31-45-123</p>
 <p>Instance ID: i-0a1b2c3d4e5f67890</p>
+```
+
 Running curl multiple times shows different hostnames—proof the load balancer is distributing traffic across multiple instances.
-What I Learned from the Documentation
+
+## What I Learned from the Documentation
 Spending time in the official docs revealed nuances:
-aws_autoscaling_group: The health_check_type = "ELB" is crucial—without it, the ASG only checks if the EC2 instance is running, not if it's actually serving HTTP traffic
-aws_lb: Application Load Balancers operate at Layer 7 (HTTP), enabling path-based routing and host-based routing (not used here, but powerful)
-Input variables: The validation block can enforce constraints (e.g., instance_type must start with "t2" or "t3")
-Data sources: The depends_on meta-argument can force data sources to refresh in specific orders when implicit dependencies aren't enough
-What Broke and How I Fixed It
-Table
-Issue	Symptom	Root Cause	Fix
-ASG instances failing health checks	Target group showed "unhealthy"	Security group blocked ALB traffic to instances	Updated instance security group to allow port 8080 from ALB security group ID, not CIDR blocks
-503 errors from ALB	Browser showed "503 Service Temporarily Unavailable"	ASG hadn't finished launching instances when I tested	Added min_elb_capacity = 2 to ASG to wait for healthy instances before considering apply complete
-User data script not executing	Apache not installed, default page showed	Launch template user data must be base64 encoded	Wrapped templatefile() with base64encode() in launch template
-Instances in only one AZ	All instances had same subnet	vpc_zone_identifier only had one subnet ID	Used data.aws_subnets.default.ids to get all default VPC subnets across AZs
+1. aws_autoscaling_group: The health_check_type = "ELB" is crucial—without it, the ASG only checks if the EC2 instance is running, not if it's actually serving HTTP traffic
+2. aws_lb: Application Load Balancers operate at Layer 7 (HTTP), enabling path-based routing and host-based routing (not used here, but powerful)
+3. Input variables: The validation block can enforce constraints (e.g., instance_type must start with "t2" or "t3")
+4. Data sources: The depends_on meta-argument can force data sources to refresh in specific orders when implicit dependencies aren't enough
+
+## What Broke and How I Fixed It
+![Table](images/image1.png)
+
 The Difference: Day 3 vs. Day 4
-Table
-Aspect	Day 3 (Single Server)	Day 4 (Clustered)
-Availability	Single point of failure	Multi-AZ redundancy
-Scalability	Manual resizing	Automatic scaling (2-5 instances)
-Health Management	Manual monitoring	Automatic replacement of unhealthy instances
-Configuration	Hardcoded values	Variables for all tunable parameters
-Security	Single security group	Layered security (ALB + instance SGs)
-Traffic Handling	Direct to instance	Load balanced across pool
-Updates	Downtime required	Rolling updates possible
-Conclusion
+![Table](images/image2.png)
+
+## Conclusion
 Moving from a single server to a clustered, load-balanced architecture taught me that production infrastructure is about resilience, not just functionality. Input variables enforce the DRY principle, making configurations maintainable across teams and environments. Data sources eliminate brittle hardcoding. Auto Scaling Groups and Load Balancers transform fragile servers into robust systems.
-This isn't just "more complex"—it's fundamentally different. A single server is a liability; a cluster is a service. Tomorrow I explore state management, which becomes critical when multiple people work on the same infrastructure.
+
+This isn't just "more complex" rather it's fundamentally different. A single server is a liability; a cluster is a service. 

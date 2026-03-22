@@ -39,11 +39,11 @@ Run aws configure and enter your credentials:
 $ aws configure
 AWS Access Key ID [None]: AKIAIOSxxxxxxxx
 AWS Secret Access Key [None]: wJalrXUtnFEMI/xxxxxxxxxxxxx
-Default region name [None]: us-east-1
+Default region name [None]: us-west-2
 Default output format [None]: json
 ```
 
-I chose us-east-1 because it has the most complete service availability and lowest latency for most global users. For production, choose the region closest to your users.
+I chose us-west-2 because it has the most complete service availability and lowest latency for most global users. For production, choose the region closest to your users.
 
 ## Step 5: Install Terraform
 I used the official HashiCorp repository to get the latest version:
