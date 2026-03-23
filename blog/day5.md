@@ -4,7 +4,7 @@
 Today marks a pivotal shift from building infrastructure to understanding the machinery that makes it reliable at scale. I completed my load-balanced, auto-scaling architecture and then dove deep into Terraform's most critical (and misunderstood) component: state. If you don't understand state, you don't understand Terraform. Period.
 
 ## Completing the Scaled Architecture
-Yesterday I built the foundation—Auto Scaling Groups and basic networking. Today I added the traffic management layer that makes this production-ready: the Application Load Balancer (ALB).
+Yesterday I built the foundation with Auto Scaling Groups and basic networking. Today I added the traffic management layer that makes this production-ready: the Application Load Balancer (ALB).
 
 ## Why an ALB Changes Everything
 Without a load balancer, traffic goes directly to instances. This creates three fatal problems:
@@ -575,7 +575,7 @@ terraform {
 
 ## Benefits:
 - Encryption at rest: S3 encrypts state files
-- Versioning: S3 keeps history of state changes—rollback to any previous version
+- Versioning: S3 keeps history of state changes, rollback to any previous version
 - Access control: IAM policies control who can read/write state
 - State locking: DynamoDB table prevents concurrent modifications
 
@@ -586,7 +586,7 @@ When two engineers run terraform apply simultaneously:
 Locking is non-negotiable for teams. Data loss from state corruption can take days to recover from.
 
 ## Terraform Block Comparison Table
-![Table](images/image5.png)
+![Table1](images/image5.png)
 
 ## Best Practices for State Management
 1. Use remote backends: S3 (AWS), GCS (GCP), Azure Blob Storage, or Terraform Cloud
@@ -602,7 +602,7 @@ Locking is non-negotiable for teams. Data loss from state corruption can take da
 State management is where Terraform transitions from "convenient tool" to "enterprise-grade infrastructure platform." The state file is not an implementation detail rather it's the heart of Terraform's operation. Understanding state locking, remote backends, and drift detection separates engineers who can safely manage production from those who will eventually cause outages.
 
 ## Common ALB Setup Challenges
-![Table](images/image6.png)
+![Table2](images/image6.png)
 
 ## Conclusion
 Today I built infrastructure that can handle real traffic and survive real failures. More importantly, I understand the machinery keeping it consistent. Terraform state isn't a side effect rather it's a deliberate design that enables team collaboration, drift detection, and safe concurrent operations. Master state management, and you've mastered the foundation of Infrastructure as Code at scale.
